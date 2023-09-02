@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    
+    <title>ZUS DG</title>
+</head>
+
+<body>
+    <style>
+    body
+    {
+        background-color: #eff3ad;
+        background-size: 100%;
+        font-family: Geneva, Arial, Helvetica, sans-serif;
+        
+    }
+
+    input {
+    padding: 10px 15px;
+    font-size: 15px;
+    text-align: center;
+    outline: none;
+    color: #fff;
+    font-weight: bold;
+    background-color: #a6cea7;
+    border: none;
+    border-radius: 15px;
+    }
+
+    .chapter {
+        font-weight: bold;
+        size: 16px;
+    }
+
+    .button {
+    padding: 10px 15px;
+    font-size: 15px;
+    text-align: center;
+    cursor: pointer;
+    outline: none;
+    color: #fff;
+    background-color: #12a517;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 9px #999;
+}
+
+.button:hover {background-color:  #a6cea7}
+
+.button:active {
+  background-color: #3e8e41;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+    
+    @media all and (min-width: 700px)
+    {
+    h1 {
+        text-align: center;
+        color: #12a517;
+    }
+    #spol
+    {
+        float: left;
+        width: 40%;
+    }
+    #zdr
+    {
+        float: right;
+        width: 60%;
+        
+    }}
+
+    </style>
+
+    <h1 class="main_name">Kalkulator składek ZUS dla JDG</h1>
+
+    <form id="ZUS">
+        <div id="spol">
+            <p class="chapter">Składka społeczna</p>
+            kiedy była zarejestowana dzałalność gospodarczą?
+            </br>
+            <input type="date" id="spoleczna">
+             <div id="sladkasp"></div>
+            <input type="button" class="button" value='Wyliczyć składkę spóleczną' id="spolecznaInp" onclick="skladkaSpoleczna()">
+  
+        </div>
+     
+
+        
+        <div class="opodatkowanie" id="zdr">
+            <p class="chapter">Składka zdrowotna</p>
+            <p id="formy">wybierz formę opodatkowania</p>
+            <p> <input type="radio" name="forma_opodatk" value="1" checked>ryczałt</p>
+            <p> <input type="radio" name="forma_opodatk" value="2" id="skala">skała podatkowa</p>
+            <p> <input type="radio" name="forma_opodatk" value="3">podatek liniowy</p>
+            <input type="button" class="button" id="Dalej" value="Dalej" onclick="formaOpodatkowania()">
+            <span id="name1"></span>
+            <span id="przyhod"></span>
+            <span id="name2"></span>
+            <span id="koszt"></span>
+        </div>
+
+
+        
+
+
+    </form>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
+    
+
+    <script>
+
+
+        
+       
+
+        let spolecznaSkladka;
+        let zdrowotnaSkladka;
+
+        let formZUS = document.getElementById('ZUS');
+
+        let kwotasp =document.getElementById('sladkasp');
+
+        let costre = /^(?=.*\d)\d*(?:\.\d{0,2})?$/g;
+
+        let spoldiv = document.getElementById('spol');
+        let zdrdiv = document.getElementById('zdr');
+
+        var podstawa1 = document.getElementById("name1");
+        var podstawa2 = document.getElementById("name2");
+
+        let przyhod = document.getElementById("przyhod");
+        let koszt = document.getElementById("koszt");
+        var podatek = document.getElementsByName('forma_opodatk');
+
+
+        function skladkaSpoleczna() {
+
+            navigator.vibrate(200);
+
+            const PREFERENCYJNY = 341.72;
+            const PELNY = 1418.48;
+
+            
+            let dateReg =document.getElementById('spoleczna').value;
+            let spolecznaInp = document.getElementById('spolecznaInp');
+
+            let now = new Date().toISOString().slice(0, 10);
+
+            
+            var x = new Date(now);
+            var y = new Date(dateReg);
+ 
+            // секунды = миллисекунды/1000
+            // минуты = секунды/60
+            // часы = минуты/60
+            // Дни = часы/24
+            // месяцы = дни/30
+
+            
+ 
+            const diffInMonths = Math.floor((x - y) / (1000 * 60 * 60 * 24*30));
+
+      
+         
+                
+            if (diffInMonths==NaN)
+            {
+                const errorMessageS = document.createElement('span');
+                errorMessageS.style.color = 'red';
+                errorMessageS.style.display='block';
+                spoldiv.appendChild(errorMessageS);
+                errorMessageS.innerHTML='bląd!';
+            }
+            
+            if (diffInMonths<6)
+            {  
+                spolecznaInp.style.visibility='hidden'; 
+                spolecznaSkladka=0;
+                kwotasp.innerHTML=`Składka ZUS spóleczna do zapłaty - ${spolecznaSkladka} PLN`;
+                saveJSONSp ()};
+            if (diffInMonths>6&diffInMonths<24)
+            {
+                spolecznaInp.style.visibility='hidden';
+                spolecznaSkladka=PREFERENCYJNY;
+                kwotasp.innerHTML=`Składka ZUS spóleczna do zapłaty - ${spolecznaSkladka} PLN`;
+                saveJSONSp ()};
+            if (diffInMonths>24)
+            {
+                spolecznaInp.style.visibility='hidden';
+                spolecznaSkladka=PELNY;
+                kwotasp.innerHTML=`Składka ZUS spóleczna do zapłaty - ${spolecznaSkladka} PLN`;
+                saveJSONSp ()}
+        
+  
+        }
+
+
+        function formaOpodatkowania() {
+
+            navigator.vibrate(200);
+
+            function skladka (procent)
+            {
+                podstawa1.innerText = 'Miesięczny przyhód w PLN:';
+                let przywod = document.createElement('input');
+                przywod.name = 'przywodliniowy';
+                przywod.type = 'text';
+                przywod.style.width = '150px';
+                przywod.style.display='block';
+                przyhod.appendChild(przywod);
+
+                podstawa2.innerText = 'Miesięczne koszty w PLN:';
+                let koszt = document.createElement('input');
+                koszt.name = 'kosztliniowy';
+                koszt.type = 'text';
+                koszt.style.width = '150px';
+                koszt.style.display='block';
+                zdrdiv.appendChild(koszt);
+
+                const costre = /^(?=.*\d)\d*(?:\.\d{0,2})?$/g;
+
+        
+
+                let buttonForma = document.createElement('input');
+                
+                buttonForma.type = 'button';
+                buttonForma.className='button';
+                buttonForma.value = 'Wyliczyc';
+                zdrdiv.appendChild(buttonForma);
+
+                //document.getElementsByName('forma_opodatk').disabled = true;
+                
+
+                przywod.addEventListener('blur', validPrzyhod, false);
+                const errorMessage = document.createElement('span');
+                errorMessage.style.color = 'red';
+                errorMessage.style.display='block';
+                podstawa1.appendChild(errorMessage);
+
+                let kwotare=/[1-9]\d*?(\.\d{0,2})?/;
+
+                function validPrzyhod(EO) {
+                    EO = EO || window.event;
+                    let valprzywod = przywod.value;
+                    if (!kwotare.test(valprzywod)) {
+                        errorMessage.textContent = 'Bląd!';
+                    }
+                    else errorMessage.textContent = null;
+                }
+
+                koszt.addEventListener('blur', validKoszt, false);
+                const errorMessageK = document.createElement('span');
+                errorMessageK.style.color = 'red';
+                errorMessageK.style.display='block';
+                podstawa2.appendChild(errorMessageK);
+
+                function validKoszt(EO) {
+                    EO = EO || window.event;
+                    let valkoszt = koszt.value;
+                 
+                    if (!kwotare.test(valkoszt)) {
+                        errorMessageK.textContent = 'Bląd!';
+                    }
+                    else errorMessageK.textContent = null;
+                }
+               
+
+                buttonForma.addEventListener('click', validforma, false);
+
+                function validforma (EO) {
+
+                    EO = EO || window.event;
+              
+
+                        try {
+                
+
+                         if (errorMessage.textContent) {
+                           EO.preventDefault();
+                            return;
+                        }
+                        if (errorMessageK.textContent) {
+                           EO.preventDefault();
+                            return;
+                        }
+                                                                                                                   
+                      }
+                        catch (ex) {
+                        EO.preventDefault();
+                        }
+
+                        let valprzywod = przywod.value;
+                        let valkoszt=koszt.value;
+                    
+                    let sumapodatek = document.createElement('div');
+                    zdrdiv.appendChild(sumapodatek);
+
+                    buttonForma.style.display='none';
+
+                     let podatek = (valprzywod - valkoszt) * procent;
+
+                    if (podatek > MIN_LINIOWY) {
+                        zdrowotnaSkladka=podatek.toFixed(2);
+                        sumapodatek.innerHTML = `Składka ZUS zdrowotna do zapłaty w kwocie - ${zdrowotnaSkladka} PLN`;
+                        saveJSONZdr();
+                     }
+                    else {
+                        zdrowotnaSkladka=MIN_LINIOWY;
+                        sumapodatek.innerHTML = `Składka ZUS zdrowotna do zapłaty w kwocie - ${zdrowotnaSkladka} PLN`;
+                        saveJSONZdr();
+                    }
+
+                };
+
+            }
+
+
+            document.getElementById("Dalej").style.display = "none";
+
+            const SKLADKAPOZIOM1 = 376.16;
+            const SKLADKAPOZIOM2 = 626.93;
+            const SKLADKAPOZIOM3 = 1128.48;
+
+            const RYCZALTPOZ1 = 60000;
+            const RYCZALTPOZ2 = 300000;
+
+            const SKALA = 0.09;
+            const LINIOWY = 0.049;
+            const MIN_LINIOWY = 314.10;
+
+
+            // var podstawa1 = document.getElementById("name1");
+            // var podstawa2 = document.getElementById("name2");
+            // var podatek = document.getElementsByName('forma_opodatk');
+
+            if (podatek[0].checked) {
+
+                podatek[1].disabled = 1;
+                podatek[2].disabled = 1;
+                podstawa1.innerText = 'Twój przychód za 2023 rok w PLN:';
+                let inputryczalt = document.createElement('input');
+                inputryczalt.name = 'ryczalt';
+                inputryczalt.type = 'text';
+                inputryczalt.style.display='block';
+                inputryczalt.style.width = '150px';
+                let formZUS = document.getElementById('ZUS');
+                przyhod.appendChild(inputryczalt);
+                let buttonRycalt = document.createElement('input');
+                buttonRycalt.type = 'button';
+                buttonRycalt.className='button';
+                buttonRycalt.value = 'Obliczyć składkę zdrowotną';
+                buttonRycalt.style.display='block';
+                zdrdiv.appendChild(buttonRycalt);
+                inputryczalt.addEventListener('blur', validNumber, false);
+                const errorMess = document.createElement('span');
+                errorMess.style.color = 'red';
+                errorMess.style.display='block'
+                przyhod.appendChild(errorMess);
+
+                function validNumber(EO) {
+                    EO = EO || window.event;
+                    let numerval = inputryczalt.value;
+                   
+                    if (!costre.test(numerval)) {
+                        errorMess.textContent = 'powinna być liczba!';
+                    }
+                    else {
+                        errorMess.textContent = null;
+                        buttonRycalt.onclick = function () {
+
+                            let numerval = inputryczalt.value;
+                            let ryczalt = document.createElement('div');
+                            zdrdiv.appendChild(ryczalt);
+
+
+                            if (numerval > 0 && numerval < RYCZALTPOZ1) {
+                                buttonRycalt.style.display = "none";
+                                zdrowotnaSkladka=SKLADKAPOZIOM1;
+                                ryczalt.innerHTML = `Składka ZUS zdrowotna do zapłaty w kwocie -  ${zdrowotnaSkladka} PLN`;
+                                
+                                saveJSONZdr();
+                            }
+                            if (numerval > RYCZALTPOZ1 && numerval < RYCZALTPOZ2) {
+                                buttonRycalt.style.display = "none";
+                                zdrowotnaSkladka=SKLADKAPOZIOM2;
+                                ryczalt.innerHTML = `Składka ZUS zdrowotna do zapłaty w kwocie - ${zdrowotnaSkladka} PLN`;
+                                saveJSONZdr();
+                            }
+
+                            if (numerval > RYCZALTPOZ2) {
+                                buttonRycalt.style.display = "none";
+                                zdrowotnaSkladka=SKLADKAPOZIOM3;
+                                ryczalt.innerHTML = `Składka ZUS zdrowotna do zapłaty w kwocie - ${zdrowotnaSkladka} PLN`;
+                                saveJSONZdr();
+                            }
+
+
+
+                        };
+
+                    }
+                };
+
+
+            }
+            if (podatek[1].checked) {
+                podatek[0].disabled = 1;
+                podatek[2].disabled = 1;
+                skladka(SKALA);
+
+            }
+            if (podatek[2].checked) {
+                podatek[1].disabled = 1;
+                podatek[0].disabled = 1;
+                skladka(LINIOWY);
+             
+
+
+            }
+        }
+
+        ////// json ///////
+
+        function saveJSONSp () {
+           
+            let formy = document.getElementById('formy')
+            let spJSON = document.createElement('input');
+            spJSON.type = 'button';
+            spJSON.className='button';
+            spJSON.value = 'Zapisz';
+            spJSON.style.display='block';
+            
+            spoldiv.appendChild(spJSON);
+
+            spJSON.onclick=function () {
+
+                navigator.vibrate(200);
+                let spolecznaJSON = JSON.stringify(spolecznaSkladka);
+       
+                console.log(spolecznaJSON);
+            }
+        
+        }
+        
+
+        function saveJSONZdr () {
+
+                     
+            let zdrJSON = document.createElement('input');
+            zdrJSON.type = 'button';
+            zdrJSON.value = 'Zapisz';
+            zdrJSON.className='button';
+            zdrJSON.style.display='block';
+          
+            zdrdiv.appendChild(zdrJSON);
+
+            zdrJSON.onclick=function () {
+                navigator.vibrate(200);
+                let zdrowotnaJSON = JSON.stringify(zdrowotnaSkladka);
+       
+                console.log(zdrowotnaJSON);
+            }
+        }
+
+
+
+
+
+        ///// animacia ///////
+        gsap.from(".main_name", {duration: 1, opacity: 0, delay: 0.5, y: 30});
+        gsap.from(".button", {duration: 0.5, opacity: 0, delay: 1});
+
+
+    </script>
+</body>
+
+</html>
